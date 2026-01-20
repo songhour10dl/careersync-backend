@@ -1,26 +1,37 @@
 // src/utils/sendEmail.js
 const nodemailer = require("nodemailer");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // use TLS
-  auth: {
-    user: process.env.GMAIL_USER, // careersyn3@gmail.com
-    pass: process.env.GMAIL_APP_PASS, // Gmail App Password
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  // Add timeout settings
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-});
+const createTransporter = async () => {
+  // Verify all required env vars are present
+  const requiredVars = [
+    "GMAIL_USER",
+    "GMAIL_CLIENT_ID",
+    "GMAIL_CLIENT_SECRET",
+    "GMAIL_REFRESH_TOKEN",
+  ];
+  const missing = requiredVars.filter((v) => !process.env[v]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.GMAIL_USER,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+    },
+  });
+
+  return transporter;
+};
 
 const sendEmail = async ({ to, subject, html }) => {
   if (!to) {
-    console.error("sendEmail ERROR: missing recipient email");
+    console.error("❌ sendEmail ERROR: missing recipient email");
     throw new Error("Recipient email missing");
   }
 
@@ -29,15 +40,20 @@ const sendEmail = async ({ to, subject, html }) => {
     to: to.trim(),
     subject,
     html,
-    text: html.replace(/<[^>]*>/g, ""), // important: plain text fallback
+    text: html.replace(/<[^>]*>/g, ""), // plain text fallback
   };
 
   try {
+    console.log(`📧 Attempting to send email to: ${to}`);
+    const transporter = await createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log("✅ Email sent successfully:", info.messageId);
     return info;
   } catch (error) {
     console.error("❌ Email send error:", error.message);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
     throw error;
   }
 };
