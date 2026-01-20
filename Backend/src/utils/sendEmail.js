@@ -2,12 +2,20 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // use TLS
   auth: {
     user: process.env.GMAIL_USER, // careersyn3@gmail.com
     pass: process.env.GMAIL_APP_PASS, // Gmail App Password
   },
-
+  tls: {
+    rejectUnauthorized: false,
+  },
+  // Add timeout settings
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 const sendEmail = async ({ to, subject, html }) => {
@@ -24,7 +32,14 @@ const sendEmail = async ({ to, subject, html }) => {
     text: html.replace(/<[^>]*>/g, ""), // important: plain text fallback
   };
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent successfully:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("❌ Email send error:", error.message);
+    throw error;
+  }
 };
 
 module.exports = sendEmail;
