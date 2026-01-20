@@ -15,6 +15,9 @@ app.use(
       "http://localhost:5175",
       "https://careersync-student-frontend.onrender.com",
       "https://mentor-4be.ptascloud.online",
+      "https://careersync-4be.ptascloud.online",
+      "https://mentor-4be.ptascloud.online",
+      "https://api-4be.ptascloud.online",
     ], // Automatically accepts the incoming website address
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
