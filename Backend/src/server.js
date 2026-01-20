@@ -10,7 +10,12 @@ const app = express();
 // Middleware - Universal CORS Fix
 app.use(
   cors({
-    origin: true, // Automatically accepts the incoming website address
+    origin: [
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "https://careersync-student-frontend.onrender.com",
+      "https://mentor-4be.ptascloud.online",
+    ], // Automatically accepts the incoming website address
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
