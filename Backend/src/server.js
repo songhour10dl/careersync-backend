@@ -8,13 +8,21 @@ const db = require("./models");
 const app = express();
 
 // Middleware - Universal CORS Fix
-app.use(cors({
-  origin: true,        // Automatically accepts the incoming website address
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['set-cookie']
-}));
+app.use(
+  cors({
+    origin: true, // Automatically accepts the incoming website address
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    exposedHeaders: ["set-cookie"],
+  }),
+);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -24,27 +32,27 @@ app.use(cookieParser());
 // -----------------------------------------------------------
 // This catches requests like: /uploads/https://pub-....
 // And redirects them to: https://pub-....
-app.use('/uploads', (req, res, next) => {
+app.use("/uploads", (req, res, next) => {
   // req.url here is the part AFTER '/uploads'
   // Example: "/https://pub-..."
 
-  if (req.url.includes('https://') || req.url.includes('http://')) {
+  if (req.url.includes("https://") || req.url.includes("http://")) {
     // Remove the leading slash to get the real absolute URL
-    let realUrl = req.url.startsWith('/') ? req.url.substring(1) : req.url;
-    
+    let realUrl = req.url.startsWith("/") ? req.url.substring(1) : req.url;
+
     // Safety check: ensure it's a valid URL string
-    if (realUrl.startsWith('http')) {
+    if (realUrl.startsWith("http")) {
       console.log(`🔀 Fixed broken link! Redirecting to: ${realUrl}`);
       return res.redirect(301, realUrl);
     }
   }
-  
+
   // If it's not a broken URL, just continue to normal static files
   next();
 });
 
 // ✅ Serve static files for uploads (Legacy fallback)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes Imports
 const authRoutes = require("./routes/auth.route");
@@ -52,7 +60,7 @@ const mentorRoutes = require("./routes/mentor.route");
 const sessionRoutes = require("./routes/mentor.session.route");
 const bookingRoutes = require("./routes/mentor.booking.route");
 const userRoute = require("./routes/user.routes");
-const userBookingRoutes = require('./routes/booking.routes');
+const userBookingRoutes = require("./routes/booking.routes");
 const timeslotRoutes = require("./routes/timeslot.route");
 const adminRoutes = require("./routes/admin-management.routes");
 const dashboardRoutes = require("./routes/dashboard.route");
@@ -63,7 +71,7 @@ const positionRoutes = require("./routes/position.routes");
 app.use("/api/timeslots", timeslotRoutes);
 app.use("/api/mentor.bookings", bookingRoutes);
 app.use("/api/sessions", sessionRoutes);
-app.use('/api/bookings', userBookingRoutes);
+app.use("/api/bookings", userBookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoute);
 app.use("/api/mentors", mentorRoutes);
@@ -93,16 +101,36 @@ app.get("/api", (req, res) => {
       dashboard: "/api/dashboard",
       industries: "/api/industries",
       positions: "/api/positions",
-      timeslots: "/api/timeslots"
-    }
+      timeslots: "/api/timeslots",
+    },
   });
 });
 
 // ⚠️ DEPRECATED: Legacy user routes (Kept for compatibility)
 app.post("/users", async (req, res) => {
   try {
-    const { username, email, password, role, fullName, phone, address, gender, dob } = req.body;
-    const user = await db.User.create({ username, email, password, role, fullName, phone, address, gender, dob });
+    const {
+      username,
+      email,
+      password,
+      role,
+      fullName,
+      phone,
+      address,
+      gender,
+      dob,
+    } = req.body;
+    const user = await db.User.create({
+      username,
+      email,
+      password,
+      role,
+      fullName,
+      phone,
+      address,
+      gender,
+      dob,
+    });
     res.status(201).json(user);
   } catch (err) {
     console.error(err);
@@ -164,28 +192,30 @@ const syncDatabase = async () => {
   try {
     await db.sequelize.authenticate();
     // 👇 LOG THE DATABASE NAME TO VERIFY
-    console.log(`✅ Database connected to: ${process.env.DB_NAME || 'Unknown DB'}`);
-    
+    console.log(
+      `✅ Database connected to: ${process.env.DB_NAME || "Unknown DB"}`,
+    );
+
     // Sync models in order
     const syncOrder = [
-      'User',        // Base table
-      'Industry', 
-      'Position', 
-      'Admin', 
-      'Mentor', 
-      'MentorDocument',    // Mentor-related tables
-      'MentorEducation',   // Mentor-related tables
-      'AccUser', 
-      'Session', 
-      'ScheduleTimeslot', 
-      'Booking', 
-      'Payment', 
-      'Invoice', 
-      'Certificate', 
-      'LoginSession', 
-      'PasswordReset'
+      "User", // Base table
+      "Industry",
+      "Position",
+      "Admin",
+      "Mentor",
+      "MentorDocument", // Mentor-related tables
+      "MentorEducation", // Mentor-related tables
+      "AccUser",
+      "Session",
+      "ScheduleTimeslot",
+      "Booking",
+      "Payment",
+      "Invoice",
+      "Certificate",
+      "LoginSession",
+      "PasswordReset",
     ];
-    
+
     // 1. Sync User Table
     if (db.User) {
       try {
@@ -196,10 +226,10 @@ const syncDatabase = async () => {
         throw userErr;
       }
     }
-    
+
     // 2. Sync Other Tables
     for (const modelName of syncOrder) {
-      if (db[modelName] && modelName !== 'User') {
+      if (db[modelName] && modelName !== "User") {
         try {
           await db[modelName].sync({ alter: false, logging: false });
         } catch (modelErr) {
@@ -207,7 +237,7 @@ const syncDatabase = async () => {
         }
       }
     }
-    
+
     console.log("✅ All models synchronized successfully");
   } catch (err) {
     console.error("❌ Database sync error:");
@@ -217,13 +247,17 @@ const syncDatabase = async () => {
 };
 
 // Start Server
-syncDatabase().then(() => {
-  const PORT = process.env.PORT || 5001;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📍 API available at ${process.env.APP_URL || `http://localhost:${PORT}`}/api`);
+syncDatabase()
+  .then(() => {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(
+        `📍 API available at ${process.env.APP_URL || `http://localhost:${PORT}`}/api`,
+      );
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
   });
-}).catch((err) => {
-  console.error('❌ Failed to start server:', err);
-  process.exit(1);
-});
